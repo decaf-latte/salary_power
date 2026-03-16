@@ -114,6 +114,174 @@ salary-dashboard/
         └── DashboardControllerSpec.groovy
 ```
 
+## ERD (Entity Relationship Diagram)
+
+현재 1단계는 단일 테이블 구조이며, 향후 멀티유저 확장 시 User 테이블이 추가됩니다.
+
+```
+┌─────────────────────────────────────────────────┐
+│                 salary_record                    │
+├─────────────────────────────────────────────────┤
+│ PK  id               BIGINT AUTO_INCREMENT       │
+│     year_month        VARCHAR(7) UNIQUE NOT NULL  │
+│ IDX salary_year       INT NOT NULL                │
+│     base_salary       BIGINT NOT NULL             │
+│     bonus             BIGINT NOT NULL             │
+│     extra_income      BIGINT NOT NULL             │
+│     gross_total       BIGINT NOT NULL (auto)      │
+│     total_deduction   BIGINT NOT NULL             │
+│     net_salary        BIGINT NOT NULL (auto)      │
+│     memo              VARCHAR(255)                │
+│     created_at        TIMESTAMP NOT NULL           │
+│     updated_at        TIMESTAMP NOT NULL           │
+├─────────────────────────────────────────────────┤
+│ UNIQUE: year_month                               │
+│ INDEX:  idx_year (salary_year)                   │
+├─────────────────────────────────────────────────┤
+│ Auto-calculated:                                 │
+│   gross_total = base_salary + bonus + extra_income│
+│   net_salary  = gross_total - total_deduction     │
+│   salary_year = year_month.getYear()              │
+└─────────────────────────────────────────────────┘
+
+┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+│         annual_summary (가상 - 쿼리 산출)        │
+├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┤
+│  year, annual_gross, estimated_annual,           │
+│  annual_net, annual_base_salary,                 │
+│  annual_bonus, annual_extra_income,              │
+│  avg_monthly_net, growth_rate,                   │
+│  cumulative_growth_rate, month_count             │
+└ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+         ↑ SalaryRecord에서 GROUP BY year로 산출
+```
+
+### 향후 확장 ERD (멀티유저)
+
+```
+┌──────────────┐       ┌─────────────────────┐
+│    user      │       │   salary_record      │
+├──────────────┤       ├─────────────────────┤
+│ PK id        │──1:N──│ FK user_id           │
+│    email     │       │ PK id                │
+│    password  │       │    year_month        │
+│    name      │       │    ... (동일)        │
+└──────────────┘       └─────────────────────┘
+```
+
+## 시퀀스 다이어그램
+
+### 급여 입력 플로우
+
+```
+사용자          SalaryController       SalaryService        SalaryRecordRepository     DB
+  │                   │                     │                        │                   │
+  │  GET /salary/new  │                     │                        │                   │
+  │──────────────────>│                     │                        │                   │
+  │  form.html (빈 폼)│                     │                        │                   │
+  │<──────────────────│                     │                        │                   │
+  │                   │                     │                        │                   │
+  │  POST /salary/save│                     │                        │                   │
+  │  (form data)      │                     │                        │                   │
+  │──────────────────>│                     │                        │                   │
+  │                   │  @Valid 검증         │                        │                   │
+  │                   │─── 실패 시 ────────>│                        │                   │
+  │  form.html (에러) │<──────────────────  │                        │                   │
+  │<──────────────────│                     │                        │                   │
+  │                   │                     │                        │                   │
+  │                   │  save(form)         │                        │                   │
+  │                   │────────────────────>│                        │                   │
+  │                   │                     │  findByYearMonth(ym)   │                   │
+  │                   │                     │───────────────────────>│  SELECT            │
+  │                   │                     │                        │─────────────────> │
+  │                   │                     │   중복 체크 OK         │                   │
+  │                   │                     │<───────────────────────│<──────────────────│
+  │                   │                     │                        │                   │
+  │                   │                     │  calculateTotals()     │                   │
+  │                   │                     │  (gross = base+bonus   │                   │
+  │                   │                     │   +extra)              │                   │
+  │                   │                     │  (net = gross          │                   │
+  │                   │                     │   -deduction)          │                   │
+  │                   │                     │                        │                   │
+  │                   │                     │  repository.save()     │                   │
+  │                   │                     │───────────────────────>│  INSERT            │
+  │                   │                     │                        │─────────────────> │
+  │                   │                     │   saved record         │                   │
+  │                   │                     │<───────────────────────│<──────────────────│
+  │                   │  redirect           │                        │                   │
+  │                   │<────────────────────│                        │                   │
+  │  302 /salary/list │                     │                        │                   │
+  │<──────────────────│                     │                        │                   │
+```
+
+### 대시보드 조회 플로우
+
+```
+사용자        DashboardController      SalaryService       SalaryRecordRepository     DB
+  │                  │                      │                       │                   │
+  │  GET /           │                      │                       │                   │
+  │─────────────────>│                      │                       │                   │
+  │                  │  getAnnualSummaries() │                       │                   │
+  │                  │─────────────────────>│                       │                   │
+  │                  │                      │  findAllYears()       │                   │
+  │                  │                      │──────────────────────>│  SELECT DISTINCT   │
+  │                  │                      │                       │─────────────────> │
+  │                  │                      │  [2025, 2026]         │                   │
+  │                  │                      │<──────────────────────│<──────────────────│
+  │                  │                      │                       │                   │
+  │                  │                      │  ── for each year ──  │                   │
+  │                  │                      │  sumGrossTotal(year)  │  SUM(gross_total)  │
+  │                  │                      │  sumNetSalary(year)   │  SUM(net_salary)   │
+  │                  │                      │  sumBaseSalary(year)  │  SUM(base_salary)  │
+  │                  │                      │  sumBonus(year)       │  SUM(bonus)        │
+  │                  │                      │  sumExtraIncome(year) │  SUM(extra_income) │
+  │                  │                      │  countByYear(year)    │  COUNT(*)          │
+  │                  │                      │──────────────────────>│─────────────────> │
+  │                  │                      │<──────────────────────│<──────────────────│
+  │                  │                      │                       │                   │
+  │                  │                      │  상승률 계산           │                   │
+  │                  │                      │  (전년대비, 누적)      │                   │
+  │                  │                      │  ── end for ──        │                   │
+  │                  │                      │                       │                   │
+  │                  │  List<AnnualSummary>  │                       │                   │
+  │                  │<─────────────────────│                       │                   │
+  │                  │                      │                       │                   │
+  │                  │  getTotalNetIncome()  │                       │                   │
+  │                  │─────────────────────>│  sumAllNetSalary()    │                   │
+  │                  │                      │──────────────────────>│  SUM(net_salary)   │
+  │                  │                      │<──────────────────────│─────────────────> │
+  │                  │<─────────────────────│                       │<──────────────────│
+  │                  │                      │                       │                   │
+  │  dashboard.html  │                      │                       │                   │
+  │  (cards + charts)│                      │                       │                   │
+  │<─────────────────│                      │                       │                   │
+```
+
+### 급여 삭제 플로우
+
+```
+사용자          SalaryController       SalaryService       SalaryRecordRepository    DB
+  │                   │                     │                       │                  │
+  │  [삭제] 클릭      │                     │                       │                  │
+  │  → 확인 모달 표시 │                     │                       │                  │
+  │                   │                     │                       │                  │
+  │  [삭제 확인]      │                     │                       │                  │
+  │  POST /salary/    │                     │                       │                  │
+  │    delete/{id}    │                     │                       │                  │
+  │──────────────────>│                     │                       │                  │
+  │                   │  delete(id)         │                       │                  │
+  │                   │────────────────────>│                       │                  │
+  │                   │                     │  deleteById(id)       │                  │
+  │                   │                     │──────────────────────>│  DELETE           │
+  │                   │                     │                       │────────────────> │
+  │                   │                     │         OK            │                  │
+  │                   │                     │<──────────────────────│<─────────────────│
+  │                   │  redirect           │                       │                  │
+  │                   │<────────────────────│                       │                  │
+  │  302 /salary/list │                     │                       │                  │
+  │<──────────────────│                     │                       │                  │
+```
+
 ## 디자인 컨셉
 
 토스(Toss) 스타일의 깔끔한 UI를 목표로 합니다.
