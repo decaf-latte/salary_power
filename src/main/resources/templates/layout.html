@@ -5,8 +5,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title layout:title-pattern="$CONTENT_TITLE - 연봉 대시보드">연봉 대시보드</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
-<body>
-    <div layout:fragment="content"></div>
+<body hx-boost="true">
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <h2>연봉 대시보드</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a th:href="@{/}" th:classappend="${currentPath == '/' ? 'active' : ''}">대시보드</a></li>
+            <li><a th:href="@{/salary/list}" th:classappend="${currentPath.startsWith('/salary') ? 'active' : ''}">급여 관리</a></li>
+            <li><a th:href="@{/annual}" th:classappend="${currentPath == '/annual' ? 'active' : ''}">연도별 비교</a></li>
+        </ul>
+    </nav>
+    <main class="content">
+        <div layout:fragment="content"></div>
+    </main>
+    <script th:src="@{/js/chart-config.js}"></script>
 </body>
 </html>

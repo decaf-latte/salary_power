@@ -2,10 +2,83 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}">
-<head><title>연도별 비교</title></head>
+<head>
+    <title>연도별 비교</title>
+</head>
 <body>
 <div layout:fragment="content">
-    <div th:each="s : ${summaries}"><span th:text="${s.year}"></span></div>
+    <div class="page-header">
+        <h1>연도별 비교</h1>
+    </div>
+
+    <div th:if="${summaries.isEmpty()}" class="empty-state">
+        <h3>비교할 데이터가 없습니다</h3>
+        <p>급여를 입력하면 연도별 비교를 확인할 수 있어요</p>
+        <a th:href="@{/salary/new}" class="btn btn-primary">급여 입력</a>
+    </div>
+
+    <div th:unless="${summaries.isEmpty()}">
+        <!-- Annual Table -->
+        <div class="table-container mb-4">
+            <table>
+                <thead>
+                    <tr>
+                        <th>연도</th>
+                        <th class="text-right">연봉 (세전)</th>
+                        <th class="text-right">실수령 합계</th>
+                        <th class="text-right">기본급</th>
+                        <th class="text-right">성과급</th>
+                        <th class="text-right">영끌</th>
+                        <th class="text-center">전년 대비</th>
+                        <th class="text-center">누적 상승률</th>
+                        <th class="text-center">데이터</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="s : ${summaries}">
+                        <td th:text="${s.year}"></td>
+                        <td class="text-right money" th:text="${#numbers.formatInteger(s.annualGross, 0, 'COMMA')}"></td>
+                        <td class="text-right money" th:text="${#numbers.formatInteger(s.annualNet, 0, 'COMMA')}"></td>
+                        <td class="text-right money" th:text="${#numbers.formatInteger(s.annualBaseSalary, 0, 'COMMA')}"></td>
+                        <td class="text-right money" th:text="${#numbers.formatInteger(s.annualBonus, 0, 'COMMA')}"></td>
+                        <td class="text-right money" th:text="${#numbers.formatInteger(s.annualExtraIncome, 0, 'COMMA')}"></td>
+                        <td class="text-center">
+                            <span th:if="${s.growthRate != null}" th:class="${s.growthRate >= 0 ? 'badge-up' : 'badge-down'}"
+                                  th:text="${(s.growthRate >= 0 ? '+' : '') + #numbers.formatDecimal(s.growthRate, 1, 1) + '%'}"></span>
+                            <span th:unless="${s.growthRate != null}" class="badge-neutral">--</span>
+                        </td>
+                        <td class="text-center">
+                            <span th:if="${s.cumulativeGrowthRate != null}" th:class="${s.cumulativeGrowthRate >= 0 ? 'badge-up' : 'badge-down'}"
+                                  th:text="${(s.cumulativeGrowthRate >= 0 ? '+' : '') + #numbers.formatDecimal(s.cumulativeGrowthRate, 1, 1) + '%'}"></span>
+                            <span th:unless="${s.cumulativeGrowthRate != null}" class="badge-neutral">--</span>
+                        </td>
+                        <td class="text-center">
+                            <span th:text="${s.monthCount} + '개월'"></span>
+                            <span th:if="${s.dataInsufficient}" style="color:var(--coral);font-size:12px"> !</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-row">
+            <div class="chart-container">
+                <div class="chart-title">연봉 상승률 추이</div>
+                <canvas id="growthRateChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">수입 구성 변화</div>
+                <canvas id="incomeCompositionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script th:unless="${summaries.isEmpty()}" th:inline="javascript">
+        window.annualData = {
+            summaries: /*[[${summaries}]]*/ []
+        };
+    </script>
 </div>
 </body>
 </html>
