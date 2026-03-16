@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head><title>급여 목록</title></head>
+<body>
+<div layout:fragment="content">
+    <div th:each="r : ${records}"><span th:text="${r.yearMonth}"></span></div>
+</div>
+</body>
+</html>
