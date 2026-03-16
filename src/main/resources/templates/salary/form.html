@@ -2,20 +2,87 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}">
-<head><title>급여 입력</title></head>
+<head>
+    <title>급여 입력</title>
+</head>
 <body>
 <div layout:fragment="content">
-    <form th:action="@{/salary/save}" th:object="${salaryForm}" method="post">
-        <input type="hidden" th:field="*{id}">
-        <input type="month" th:field="*{yearMonth}">
-        <input type="number" th:field="*{baseSalary}">
-        <input type="number" th:field="*{bonus}">
-        <input type="number" th:field="*{extraIncome}">
-        <input type="number" th:field="*{totalDeduction}">
-        <input type="number" th:field="*{netSalary}">
-        <textarea th:field="*{memo}"></textarea>
-        <button type="submit">저장</button>
-    </form>
+    <div class="page-header">
+        <h1 th:text="${salaryForm.id != null ? '급여 수정' : '급여 입력'}">급여 입력</h1>
+    </div>
+
+    <div class="form-container">
+        <form th:action="@{/salary/save}" th:object="${salaryForm}" method="post">
+            <input type="hidden" th:field="*{id}">
+
+            <div class="form-group">
+                <label for="yearMonth">연월</label>
+                <input type="month" id="yearMonth" th:field="*{yearMonth}">
+                <div class="error" th:if="${#fields.hasErrors('yearMonth')}" th:errors="*{yearMonth}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="baseSalary">기본급</label>
+                <input type="number" id="baseSalary" th:field="*{baseSalary}" placeholder="0" oninput="calculateTotals()">
+                <div class="error" th:if="${#fields.hasErrors('baseSalary')}" th:errors="*{baseSalary}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="bonus">성과급</label>
+                <input type="number" id="bonus" th:field="*{bonus}" placeholder="0" oninput="calculateTotals()">
+                <div class="error" th:if="${#fields.hasErrors('bonus')}" th:errors="*{bonus}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="extraIncome">영끌 (기타수당)</label>
+                <input type="number" id="extraIncome" th:field="*{extraIncome}" placeholder="0" oninput="calculateTotals()">
+                <div class="error" th:if="${#fields.hasErrors('extraIncome')}" th:errors="*{extraIncome}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="grossDisplay">세전 총액 (자동 계산)</label>
+                <input type="text" id="grossDisplay" class="computed" readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="totalDeduction">총 공제액</label>
+                <input type="number" id="totalDeduction" th:field="*{totalDeduction}" placeholder="0" oninput="calculateTotals()">
+                <div class="error" th:if="${#fields.hasErrors('totalDeduction')}" th:errors="*{totalDeduction}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="netSalary">실수령액 (자동 계산, 수정 가능)</label>
+                <input type="number" id="netSalary" th:field="*{netSalary}" placeholder="자동 계산">
+            </div>
+
+            <div class="form-group">
+                <label for="memo">메모 (선택)</label>
+                <textarea id="memo" th:field="*{memo}" rows="3" placeholder="예: 연말정산 환급 포함"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button type="submit" class="btn btn-primary">저장</button>
+                <a th:href="@{/salary/list}" class="btn btn-secondary">취소</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function calculateTotals() {
+            const base = parseInt(document.getElementById('baseSalary').value) || 0;
+            const bonus = parseInt(document.getElementById('bonus').value) || 0;
+            const extra = parseInt(document.getElementById('extraIncome').value) || 0;
+            const deduction = parseInt(document.getElementById('totalDeduction').value) || 0;
+
+            const gross = base + bonus + extra;
+            const net = gross - deduction;
+
+            document.getElementById('grossDisplay').value = gross.toLocaleString('ko-KR') + '원';
+            document.getElementById('netSalary').value = net;
+        }
+        // 페이지 로드 시 초기 계산
+        document.addEventListener('DOMContentLoaded', calculateTotals);
+    </script>
 </div>
 </body>
 </html>

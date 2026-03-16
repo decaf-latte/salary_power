@@ -2,10 +2,88 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}">
-<head><title>대시보드</title></head>
+<head>
+    <title>대시보드</title>
+</head>
 <body>
 <div layout:fragment="content">
-    <div th:if="${isEmpty}"><p>빈 상태</p></div>
+
+    <!-- Empty State -->
+    <div th:if="${isEmpty}" class="empty-state">
+        <h3>아직 급여 데이터가 없어요</h3>
+        <p>첫 급여를 입력하고 연봉 추이를 확인해보세요</p>
+        <a th:href="@{/salary/new}" class="btn btn-primary">첫 급여 입력하기</a>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div th:unless="${isEmpty}">
+        <div class="page-header">
+            <h1>대시보드</h1>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-label">현재 연봉</div>
+                <div class="card-value money" th:text="${#numbers.formatInteger(currentAnnual.annualGross, 0, 'COMMA')} + '원'">0원</div>
+                <div class="card-sub" th:if="${currentAnnual.dataInsufficient}">
+                    데이터 부족 (예상: <span class="money" th:text="${#numbers.formatInteger(currentAnnual.estimatedAnnual, 0, 'COMMA')} + '원'"></span>)
+                </div>
+                <div class="card-sub" th:unless="${currentAnnual.dataInsufficient}" th:if="${currentAnnual.monthCount < 12}">
+                    예상 연봉: <span class="money" th:text="${#numbers.formatInteger(currentAnnual.estimatedAnnual, 0, 'COMMA')} + '원'"></span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-label">전년 대비</div>
+                <div th:if="${growthRate != null}">
+                    <span th:class="${growthRate >= 0 ? 'badge-up' : 'badge-down'}"
+                          th:text="${growthRate >= 0 ? '+' : ''} + ${#numbers.formatDecimal(growthRate, 1, 1)} + '%'"></span>
+                </div>
+                <div th:unless="${growthRate != null}">
+                    <span class="badge-neutral">--</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-label">누적 총 수입</div>
+                <div class="card-value money" th:text="${#numbers.formatInteger(totalNetIncome, 0, 'COMMA')} + '원'">0원</div>
+                <div class="card-sub">전체 기간 실수령 합계</div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1: 연봉 추이 + 월별 실수령 -->
+        <div class="chart-row">
+            <div class="chart-container">
+                <div class="chart-title">연도별 연봉 추이</div>
+                <canvas id="annualTrendChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">월별 실수령액</div>
+                <canvas id="monthlyNetChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Charts Row 2: 세전 vs 세후 + 수입 구성 -->
+        <div class="chart-row">
+            <div class="chart-container">
+                <div class="chart-title">세전 vs 세후 비교</div>
+                <canvas id="grossVsNetChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">수입 구성 비중</div>
+                <canvas id="incomeBreakdownChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Data -->
+    <script th:unless="${isEmpty}" th:inline="javascript">
+        window.dashboardData = {
+            summaries: /*[[${summaries}]]*/ [],
+            monthlyRecords: /*[[${monthlyRecords}]]*/ []
+        };
+    </script>
 </div>
 </body>
 </html>
