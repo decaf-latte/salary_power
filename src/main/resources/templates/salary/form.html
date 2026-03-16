@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head><title>급여 입력</title></head>
+<body>
+<div layout:fragment="content">
+    <form th:action="@{/salary/save}" th:object="${salaryForm}" method="post">
+        <input type="hidden" th:field="*{id}">
+        <input type="month" th:field="*{yearMonth}">
+        <input type="number" th:field="*{baseSalary}">
+        <input type="number" th:field="*{bonus}">
+        <input type="number" th:field="*{extraIncome}">
+        <input type="number" th:field="*{totalDeduction}">
+        <input type="number" th:field="*{netSalary}">
+        <textarea th:field="*{memo}"></textarea>
+        <button type="submit">저장</button>
+    </form>
+</div>
+</body>
+</html>
