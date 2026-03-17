@@ -45,25 +45,102 @@ function initDashboardCharts() {
     if (!window.dashboardData) return;
     const { summaries, monthlyRecords } = window.dashboardData;
 
-    // 연도별 연봉 추이 (꺾은선)
+    // 연도별 연봉 추이 (스택 막대: 유지분 + 상승분)
     const annualCtx = document.getElementById('annualTrendChart');
     if (annualCtx) {
+        // 유지분(전년도 금액)과 상승분 계산
+        const baseData = summaries.map((s, i) => {
+            if (i === 0) return s.annualGross;
+            const prev = summaries[i - 1].annualGross;
+            const diff = s.annualGross - prev;
+            return diff >= 0 ? prev : s.annualGross;
+        });
+        const growthData = summaries.map((s, i) => {
+            if (i === 0) return 0;
+            const prev = summaries[i - 1].annualGross;
+            const diff = s.annualGross - prev;
+            return diff >= 0 ? diff : 0;
+        });
+        const declineData = summaries.map((s, i) => {
+            if (i === 0) return 0;
+            const prev = summaries[i - 1].annualGross;
+            const diff = s.annualGross - prev;
+            return diff < 0 ? Math.abs(diff) : 0;
+        });
+
         new Chart(annualCtx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: summaries.map(s => s.year + '년'),
-                datasets: [{
-                    label: '연봉 (세전)',
-                    data: summaries.map(s => s.annualGross),
-                    borderColor: COLORS.mint,
-                    backgroundColor: COLORS.mintLight,
-                    fill: true,
-                    tension: 0.3,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
-                }]
+                datasets: [
+                    {
+                        label: '유지',
+                        data: baseData,
+                        backgroundColor: COLORS.navy,
+                        borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 8, bottomRight: 8 }
+                    },
+                    {
+                        label: '상승분',
+                        data: growthData,
+                        backgroundColor: COLORS.mint,
+                        borderRadius: { topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0 }
+                    }
+                ]
             },
-            options: { ...commonOptions }
+            options: {
+                ...commonOptions,
+                scales: {
+                    x: { stacked: true },
+                    y: {
+                        stacked: true,
+                        ticks: {
+                            callback: function(val) {
+                                if (val >= 10000) return (val / 10000).toLocaleString('ko-KR') + '만';
+                                return val.toLocaleString('ko-KR');
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    ...commonOptions.plugins,
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const idx = ctx.dataIndex;
+                                const total = summaries[idx].annualGross;
+                                if (ctx.datasetIndex === 0) {
+                                    return '총 연봉: ' + total.toLocaleString('ko-KR') + '원';
+                                }
+                                const gr = summaries[idx].growthRate;
+                                if (gr != null && ctx.parsed.y > 0) {
+                                    return '상승분: +' + ctx.parsed.y.toLocaleString('ko-KR') + '원 (+' + gr.toFixed(1) + '%)';
+                                }
+                                return '';
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [{
+                id: 'growthRateLabels',
+                afterDatasetsDraw: function(chart) {
+                    const ctxDraw = chart.ctx;
+                    const meta = chart.getDatasetMeta(1);
+                    ctxDraw.save();
+                    ctxDraw.font = 'bold 12px -apple-system, sans-serif';
+                    ctxDraw.textAlign = 'center';
+                    meta.data.forEach((bar, i) => {
+                        const gr = summaries[i].growthRate;
+                        if (gr != null) {
+                            const sign = gr >= 0 ? '+' : '';
+                            const text = sign + gr.toFixed(1) + '%';
+                            ctxDraw.fillStyle = gr >= 0 ? COLORS.mint : COLORS.coral;
+                            ctxDraw.fillText(text, bar.x, bar.y - 8);
+                        }
+                    });
+                    ctx.restore();
+                }
+            }]
         });
     }
 
