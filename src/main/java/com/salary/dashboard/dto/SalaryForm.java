@@ -18,8 +18,8 @@ public class SalaryForm {
     @Min(value = 0, message = "성과급은 0 이상이어야 합니다")
     private Long bonus;
 
-    @NotNull(message = "영끌을 입력해주세요")
-    @Min(value = 0, message = "영끌은 0 이상이어야 합니다")
+    @NotNull(message = "기타 수당을 입력해주세요")
+    @Min(value = 0, message = "기타 수당은 0 이상이어야 합니다")
     private Long extraIncome;
 
     @NotNull(message = "총 공제액을 입력해주세요")

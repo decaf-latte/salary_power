@@ -127,7 +127,7 @@ function initDashboardCharts() {
         new Chart(breakdownCtx, {
             type: 'doughnut',
             data: {
-                labels: ['기본급', '성과급', '영끌'],
+                labels: ['기본급', '성과급', '기타 수당'],
                 datasets: [{
                     data: [totalBase, totalBonus, totalExtra],
                     backgroundColor: [COLORS.navy, COLORS.mint, COLORS.coral],
@@ -215,7 +215,7 @@ function initAnnualCharts() {
                         backgroundColor: COLORS.mint
                     },
                     {
-                        label: '영끌',
+                        label: '기타 수당',
                         data: summaries.map(s => s.annualExtraIncome),
                         backgroundColor: COLORS.coral
                     }

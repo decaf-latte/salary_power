@@ -34,7 +34,7 @@
             </div>
 
             <div class="form-group">
-                <label for="extraIncome">영끌 (기타수당)</label>
+                <label for="extraIncome">기타 수당</label>
                 <input type="number" id="extraIncome" th:field="*{extraIncome}" placeholder="0" oninput="calculateTotals()">
                 <div class="error" th:if="${#fields.hasErrors('extraIncome')}" th:errors="*{extraIncome}"></div>
             </div>

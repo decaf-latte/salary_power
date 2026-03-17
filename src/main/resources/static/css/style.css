@@ -408,3 +408,149 @@ tbody tr:hover {
 .mt-4 { margin-top: 16px; }
 .mb-4 { margin-bottom: 16px; }
 .money { font-variant-numeric: tabular-nums; }
+
+/* === Responsive: Tablet (768px 이하) === */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        bottom: 0;
+        top: auto;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        padding: 0;
+        z-index: 50;
+    }
+
+    .sidebar-logo {
+        display: none;
+    }
+
+    .sidebar-menu {
+        display: flex;
+        width: 100%;
+        padding: 0;
+        justify-content: space-around;
+    }
+
+    .sidebar-menu li {
+        flex: 1;
+    }
+
+    .sidebar-menu li a {
+        text-align: center;
+        padding: 12px 8px;
+        font-size: 13px;
+        border-left: none !important;
+    }
+
+    .sidebar-menu li a.active {
+        border-left: none;
+        border-top: 3px solid var(--mint);
+    }
+
+    .content {
+        margin-left: 0;
+        padding: 24px 16px 80px;
+        max-width: 100%;
+    }
+
+    .card-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .chart-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .card {
+        padding: 20px;
+    }
+
+    .card-value {
+        font-size: 24px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .page-header h1 {
+        font-size: 22px;
+    }
+
+    .form-container {
+        max-width: 100%;
+        padding: 24px;
+    }
+
+    .table-container {
+        padding: 12px;
+    }
+
+    table {
+        font-size: 13px;
+    }
+
+    thead th {
+        padding: 8px 6px;
+        font-size: 11px;
+    }
+
+    tbody td {
+        padding: 10px 6px;
+        font-size: 13px;
+    }
+
+    .empty-state {
+        padding: 48px 24px;
+    }
+
+    .filter-bar {
+        flex-wrap: wrap;
+    }
+
+    .modal {
+        margin: 16px;
+        max-width: calc(100% - 32px);
+    }
+}
+
+/* === Responsive: Mobile (480px 이하) === */
+@media (max-width: 480px) {
+    .content {
+        padding: 16px 12px 80px;
+    }
+
+    .card-value {
+        font-size: 20px;
+    }
+
+    .card-label {
+        font-size: 11px;
+    }
+
+    .btn {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+
+    .btn-sm {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    .chart-container {
+        padding: 16px;
+    }
+
+    .chart-title {
+        font-size: 14px;
+    }
+}

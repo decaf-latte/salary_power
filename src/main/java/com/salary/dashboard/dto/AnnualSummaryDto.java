@@ -8,7 +8,7 @@ public class AnnualSummaryDto {
     private Long annualNet;          // 연간 실수령 합계
     private Long annualBaseSalary;   // 연간 기본급 합계
     private Long annualBonus;        // 연간 성과급 합계
-    private Long annualExtraIncome;  // 연간 영끌 합계
+    private Long annualExtraIncome;  // 연간 기타 수당 합계
     private Double avgMonthlyNet;    // 월평균 실수령액
     private Double growthRate;       // 전년 대비 상승률 (%)
     private Double cumulativeGrowthRate; // 누적 상승률 (%)

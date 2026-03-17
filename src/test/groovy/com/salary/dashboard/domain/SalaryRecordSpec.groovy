@@ -12,7 +12,7 @@ class SalaryRecordSpec extends Specification {
     SalaryRecord record = new SalaryRecord()
 
     @Unroll
-    def "grossTotal은 기본급(#base) + 성과급(#bonus) + 영끌(#extra) = #expected"() {
+    def "grossTotal은 기본급(#base) + 성과급(#bonus) + 기타수당(#extra) = #expected"() {
         given:
         record.baseSalary = base
         record.bonus = bonus
